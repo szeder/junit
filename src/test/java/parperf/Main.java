@@ -55,7 +55,16 @@ public class Main {
 
 	public static class TestClass {
 
+		// the test method will sleep this long (ms)
+		final int testSleep = Integer.getInteger("testsleep", 0);
+
 		public void doSomething() {
+			if (testSleep != 0) {
+				try {
+					Thread.sleep(testSleep);
+				} catch (InterruptedException e) {}
+			}
+
 			assertTrue(true);
 		}
 
