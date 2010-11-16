@@ -3,8 +3,10 @@ package parperf;
 import org.junit.Test;
 import org.junit.experimental.ParallelComputer;
 import org.junit.runner.Computer;
+import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
+import org.junit.runner.notification.RunListener;
 
 import static junit.framework.Assert.*;
 
@@ -16,17 +18,28 @@ public class Main {
 		final boolean sequential = Boolean.getBoolean("sequential");
 		// TestClass will be run this many times in parallel
 		final int testClassCount = Integer.getInteger("testclasscount", 4);
+		// the listener's testFinished method will sleep this long (ms)
+		final int listenerSleep = Integer.getInteger("listenersleep", 0);
 
 		Class<?>[] classes = new Class<?>[testClassCount];
 		for (int i = 0; i < classes.length; i++) {
 			classes[i] = TestClass.class;
 		}
 
+		JUnitCore junit = new JUnitCore();
+		junit.addListener(new RunListener() {
+			@Override
+			public void testFinished(Description description) throws Exception {
+				if (listenerSleep != 0) {
+					Thread.sleep(listenerSleep);
+				}
+			}
+		});
 		Computer computer = sequential ? Computer.serial()
 				: ParallelComputer.classes();
 
 		long start= System.currentTimeMillis();
-		Result result= JUnitCore.runClasses(computer, classes);
+		Result result= junit.run(computer, classes);
 		long end= System.currentTimeMillis();
 
 		assertTrue(result.wasSuccessful());
@@ -34,6 +47,7 @@ public class Main {
 		System.out.println("s/p: " + (sequential ? "seq" : "par"));
 		System.out.println("test class count: " + testClassCount);
 		System.out.println("test count: " + result.getRunCount());
+		System.out.println("listener sleeps (ms):" + listenerSleep);
 		System.out.println("time (ms): " + (end-start));
 
 		System.exit(0);
