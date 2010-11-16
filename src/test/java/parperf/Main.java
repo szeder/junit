@@ -2,6 +2,7 @@ package parperf;
 
 import org.junit.Test;
 import org.junit.experimental.ParallelComputer;
+import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 
@@ -11,6 +12,8 @@ public class Main {
 
 	public static void main(String[] args) {
 
+		// if true, run tests sequentially
+		final boolean sequential = Boolean.getBoolean("sequential");
 		// TestClass will be run this many times in parallel
 		final int testClassCount = Integer.getInteger("testclasscount", 4);
 
@@ -19,13 +22,16 @@ public class Main {
 			classes[i] = TestClass.class;
 		}
 
+		Computer computer = sequential ? Computer.serial()
+				: ParallelComputer.classes();
+
 		long start= System.currentTimeMillis();
-		Result result= JUnitCore.runClasses(ParallelComputer.classes(),
-				classes);
+		Result result= JUnitCore.runClasses(computer, classes);
 		long end= System.currentTimeMillis();
 
 		assertTrue(result.wasSuccessful());
 
+		System.out.println("s/p: " + (sequential ? "seq" : "par"));
 		System.out.println("test class count: " + testClassCount);
 		System.out.println("test count: " + result.getRunCount());
 		System.out.println("time (ms): " + (end-start));
